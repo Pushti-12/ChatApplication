@@ -1,0 +1,208 @@
+﻿@model ChatApplication.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<link rel="stylesheet" href="~/css/auth.css" />
+
+<div class="auth-page">
+
+    <div class="auth-background-orb orb-one"></div>
+    <div class="auth-background-orb orb-two"></div>
+    <div class="auth-background-grid"></div>
+
+    <div class="auth-card login-card">
+
+        <div class="auth-brand">
+
+            <div class="auth-logo">
+                C
+            </div>
+
+            <div class="auth-brand-name">
+                ChatApplication
+            </div>
+
+        </div>
+
+        <div class="auth-title">
+            Welcome back
+        </div>
+
+        <div class="auth-subtitle">
+            Sign in to continue chatting with your people.
+        </div>
+
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="auth-success">
+                <span class="status-icon">✓</span>
+                <span>@TempData["SuccessMessage"]</span>
+            </div>
+        }
+
+
+        <form asp-action="Login"
+              asp-controller="Auth"
+              method="post"
+              class="auth-form">
+
+            <div asp-validation-summary="ModelOnly"
+                 class="auth-error validation-summary">
+            </div>
+
+
+            <!-- EMAIL -->
+
+            <div class="auth-group">
+
+                <label asp-for="Email"
+                       class="auth-label">
+                    Email Address
+                </label>
+
+                <div class="auth-input-wrapper">
+
+                    <span class="input-icon">
+                        ✉
+                    </span>
+
+                    <input asp-for="Email"
+                           class="auth-input"
+                           placeholder="you@example.com"
+                           autocomplete="email" />
+
+                </div>
+
+                <span asp-validation-for="Email"
+                      class="auth-error">
+                </span>
+
+            </div>
+
+
+            <!-- PASSWORD -->
+
+            <div class="auth-group">
+
+                <div class="password-label-row">
+
+                    <label asp-for="Password"
+                           class="auth-label">
+                        Password
+                    </label>
+
+                </div>
+
+                <div class="auth-input-wrapper">
+
+                    <span class="input-icon">
+                        🔒
+                    </span>
+
+                    <input asp-for="Password"
+                           type="password"
+                           class="auth-input password-input"
+                           id="loginPassword"
+                           placeholder="Enter your password"
+                           autocomplete="current-password" />
+
+                    <button type="button"
+                            class="password-toggle"
+                            data-target="loginPassword"
+                            aria-label="Show password">
+                        👁
+                    </button>
+
+                </div>
+
+                <span asp-validation-for="Password"
+                      class="auth-error">
+                </span>
+
+            </div>
+
+
+            <!-- FORGOT PASSWORD -->
+
+            <div class="auth-forgot">
+
+                <a asp-action="ForgotPassword">
+                    Forgot password?
+                </a>
+
+            </div>
+
+
+            <!-- LOGIN BUTTON -->
+
+            <button type="submit"
+                    class="auth-button">
+
+                <span>
+                    Sign In
+                </span>
+
+                <span class="button-arrow">
+                    →
+                </span>
+
+            </button>
+
+        </form>
+
+
+        <div class="auth-divider">
+            <span>New to ChatApplication?</span>
+        </div>
+
+
+        <div class="auth-register-link">
+
+            <a asp-action="Register">
+                Create your account
+                <span>→</span>
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    document.querySelectorAll(".password-toggle").forEach(function (button) {
+
+        button.addEventListener("click", function () {
+
+            const targetId = this.getAttribute("data-target");
+            const input = document.getElementById(targetId);
+
+            if (!input) {
+                return;
+            }
+
+            if (input.type === "password") {
+
+                input.type = "text";
+                this.textContent = "🙈";
+                this.setAttribute("aria-label", "Hide password");
+
+            }
+            else {
+
+                input.type = "password";
+                this.textContent = "👁";
+                this.setAttribute("aria-label", "Show password");
+
+            }
+
+        });
+
+    });
+
+</script>

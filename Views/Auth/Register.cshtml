@@ -1,0 +1,328 @@
+﻿@model ChatApplication.Models.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Create Account";
+}
+
+<link rel="stylesheet" href="~/css/auth.css" />
+
+<div class="auth-page">
+
+    <div class="auth-background-orb orb-one"></div>
+    <div class="auth-background-orb orb-two"></div>
+    <div class="auth-background-grid"></div>
+
+    <div class="auth-card register-card">
+
+        <div class="auth-brand">
+
+            <div class="auth-logo">
+                C
+            </div>
+
+            <div class="auth-brand-name">
+                ChatApplication
+            </div>
+
+        </div>
+
+
+        <div class="auth-title">
+            Create Account
+        </div>
+
+        <div class="auth-subtitle">
+            Join the conversation and start connecting.
+        </div>
+
+
+        <form asp-action="Register"
+              asp-controller="Auth"
+              method="post"
+              class="auth-form">
+
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly"
+                 class="auth-error validation-summary">
+            </div>
+
+
+            <!-- NAME -->
+
+            <div class="auth-group">
+
+                <label asp-for="Name"
+                       class="auth-label">
+                    Full Name
+                </label>
+
+                <div class="auth-input-wrapper">
+
+                    <span class="input-icon">
+                        👤
+                    </span>
+
+                    <input asp-for="Name"
+                           class="auth-input"
+                           placeholder="Enter your full name"
+                           autocomplete="name" />
+
+                </div>
+
+                <span asp-validation-for="Name"
+                      class="auth-error">
+                </span>
+
+            </div>
+
+
+            <!-- EMAIL -->
+
+            <div class="auth-group">
+
+                <label asp-for="Email"
+                       class="auth-label">
+                    Email Address
+                </label>
+
+                <div class="auth-input-wrapper">
+
+                    <span class="input-icon">
+                        ✉
+                    </span>
+
+                    <input asp-for="Email"
+                           class="auth-input"
+                           placeholder="Enter your email"
+                           autocomplete="email" />
+
+                </div>
+
+                <span asp-validation-for="Email"
+                      class="auth-error">
+                </span>
+
+            </div>
+
+
+            <!-- PHONE -->
+
+            <div class="auth-group">
+
+                <label asp-for="PhoneNumber"
+                       class="auth-label">
+                    Phone Number
+                </label>
+
+                <div class="auth-input-wrapper">
+
+                    <span class="input-icon">
+                        ☎
+                    </span>
+
+                    <input asp-for="PhoneNumber"
+                           class="auth-input"
+                           placeholder="Enter phone number"
+                           autocomplete="tel" />
+
+                </div>
+
+                <span asp-validation-for="PhoneNumber"
+                      class="auth-error">
+                </span>
+
+            </div>
+
+
+            <!-- ROLE -->
+
+            <div class="auth-group">
+
+                <label asp-for="Role"
+                       class="auth-label">
+                    Account Type
+                </label>
+
+                <div class="auth-input-wrapper">
+
+                    <span class="input-icon">
+                        🛡
+                    </span>
+
+                    <select asp-for="Role"
+                            class="auth-input auth-select">
+
+                        <option value="USER">
+                            User
+                        </option>
+
+                        <option value="ADMIN">
+                            Administrator
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <span asp-validation-for="Role"
+                      class="auth-error">
+                </span>
+
+            </div>
+
+
+            <!-- PASSWORD -->
+
+            <div class="auth-group">
+
+                <label asp-for="Password"
+                       class="auth-label">
+                    Password
+                </label>
+
+                <div class="auth-input-wrapper">
+
+                    <span class="input-icon">
+                        🔒
+                    </span>
+
+                    <input asp-for="Password"
+                           type="password"
+                           class="auth-input password-input"
+                           id="registerPassword"
+                           placeholder="Create a password"
+                           autocomplete="new-password" />
+
+                    <button type="button"
+                            class="password-toggle"
+                            data-target="registerPassword"
+                            aria-label="Show password">
+                        👁
+                    </button>
+
+                </div>
+
+                <span asp-validation-for="Password"
+                      class="auth-error">
+                </span>
+
+            </div>
+
+
+            <!-- CONFIRM PASSWORD -->
+
+            <div class="auth-group">
+
+                <label asp-for="ConfirmPassword"
+                       class="auth-label">
+                    Confirm Password
+                </label>
+
+                <div class="auth-input-wrapper">
+
+                    <span class="input-icon">
+                        🔐
+                    </span>
+
+                    <input asp-for="ConfirmPassword"
+                           type="password"
+                           class="auth-input password-input"
+                           id="confirmPassword"
+                           placeholder="Confirm your password"
+                           autocomplete="new-password" />
+
+                    <button type="button"
+                            class="password-toggle"
+                            data-target="confirmPassword"
+                            aria-label="Show password">
+                        👁
+                    </button>
+
+                </div>
+
+                <span asp-validation-for="ConfirmPassword"
+                      class="auth-error">
+                </span>
+
+            </div>
+
+
+            <!-- SUBMIT -->
+
+            <button type="submit"
+                    class="auth-button">
+
+                <span>
+                    Create Account
+                </span>
+
+                <span class="button-arrow">
+                    →
+                </span>
+
+            </button>
+
+        </form>
+
+
+        <div class="auth-divider">
+            <span>Already have an account?</span>
+        </div>
+
+
+        <div class="auth-register-link">
+
+            <a asp-controller="Auth"
+               asp-action="Login">
+
+                Sign in
+                <span>→</span>
+
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        document.querySelectorAll(".password-toggle").forEach(function (button) {
+
+            button.addEventListener("click", function () {
+
+                const targetId = this.getAttribute("data-target");
+                const input = document.getElementById(targetId);
+
+                if (!input) {
+                    return;
+                }
+
+                if (input.type === "password") {
+
+                    input.type = "text";
+                    this.textContent = "🙈";
+                    this.setAttribute("aria-label", "Hide password");
+
+                }
+                else {
+
+                    input.type = "password";
+                    this.textContent = "👁";
+                    this.setAttribute("aria-label", "Show password");
+
+                }
+
+            });
+
+        });
+
+    </script>
+}

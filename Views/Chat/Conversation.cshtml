@@ -1,0 +1,2199 @@
+﻿@model ChatApplication.Models.ChatViewModel
+
+@{
+    Layout = null;
+    ViewData["Title"] = Model.OtherUser.Name;
+    var currentUserId = ViewBag.CurrentUserId;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>@Model.OtherUser.Name - ChatApp</title>
+
+    <link rel="stylesheet"
+          href="~/css/chat.css" />
+
+    <style>
+        /* Only textarea support.
+           Existing chat.css UI remains untouched. */
+
+        .message-input-wrapper textarea {
+            flex: 1;
+            min-width: 0;
+            min-height: 40px;
+            max-height: 140px;
+            padding: 9px 7px;
+            border: 0;
+            outline: none;
+            resize: none;
+            overflow-y: auto;
+            background: transparent;
+            color: #25293b;
+            font-family: inherit;
+            font-size: 13px;
+            line-height: 20px;
+        }
+
+        .message-input-wrapper textarea::placeholder {
+            color: #999fb0;
+        }
+
+        body.chat-dark .message-input-wrapper textarea {
+            color: #f2f3f7;
+        }
+
+        body.chat-dark .message-input-wrapper textarea::placeholder {
+            color: #858da3;
+        }
+
+        .delete-chat-item {
+            color: #dc3545 !important;
+        }
+
+        .delete-chat-item:hover {
+            background: #fff1f2 !important;
+            color: #dc2626 !important;
+        }
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="chat-page">
+
+    <div class="chat-shell">
+
+
+        <!-- =====================================================
+             SIDEBAR
+        ====================================================== -->
+
+        <aside class="chat-sidebar"
+               id="chatSidebar">
+
+
+            <div class="sidebar-header">
+
+                <div class="brand">
+
+                    <div class="brand-icon">
+                        C
+                    </div>
+
+                    <div class="brand-text">
+
+                        <h2>
+                            ChatApp
+                        </h2>
+
+                        <span>
+                            Messages
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- SEARCH -->
+
+            <div class="sidebar-search">
+
+                <div class="search-box">
+
+                    <span class="search-icon">
+                        ⌕
+                    </span>
+
+                    <input type="text"
+                           id="userSearch"
+                           placeholder="Search people..."
+                           autocomplete="off" />
+
+                </div>
+
+            </div>
+
+
+            <!-- USER LIST -->
+
+            <div class="user-list"
+                 id="userList">
+
+                @foreach (var user in Model.Users)
+                {
+                    <a class="user-item @(user.Id == Model.OtherUser.Id ? "active" : "")"
+                       asp-controller="Chat"
+                       asp-action="Conversation"
+                       asp-route-userId="@user.Id"
+                       data-user-id="@user.Id"
+                       data-name="@user.Name.ToLower()">
+
+                        <div class="avatar-wrapper">
+
+                            <div class="user-avatar">
+
+                                @user.Name.Substring(0, 1).ToUpper()
+
+                            </div>
+
+                            <span class="online-indicator offline">
+                            </span>
+
+                        </div>
+
+
+                        <div class="user-info">
+
+                            <strong>
+                                @user.Name
+                            </strong>
+
+                            <span>
+                                @(user.Role == "ADMIN"
+                                    ? "Administrator"
+                                    : "Available to chat")
+                            </span>
+
+                        </div>
+
+
+                        <div class="user-arrow">
+                            ›
+                        </div>
+
+                    </a>
+                }
+
+
+                <div class="no-search-results"
+                     id="emptyUsers">
+
+                    <div>
+                        ⌕
+                    </div>
+
+                    <strong>
+                        No people found
+                    </strong>
+
+                    <span>
+                        Try searching with another name.
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- FOOTER -->
+
+            <div class="sidebar-footer">
+
+                <a class="footer-action"
+                   asp-controller="Home"
+                   asp-action="Index">
+
+                    <span>
+                        ←
+                    </span>
+
+                    Home
+
+                </a>
+
+
+                <button type="button"
+                        class="footer-action"
+                        id="appearanceButton">
+
+                    <span>
+                        ✦
+                    </span>
+
+                    Appearance
+
+                </button>
+
+
+                <form asp-controller="Auth"
+                      asp-action="Logout"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="footer-action logout-action">
+
+                        <span>
+                            ↪
+                        </span>
+
+                        Logout
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </aside>
+
+
+
+        <!-- =====================================================
+             MAIN CHAT
+        ====================================================== -->
+
+        <main class="chat-main"
+              id="chatMain">
+
+
+            <!-- =================================================
+                 HEADER
+            ================================================== -->
+
+            <header class="conversation-header">
+
+
+                <div class="conversation-user">
+
+
+                    <a class="mobile-back"
+                       asp-controller="Chat"
+                       asp-action="Index">
+
+                        ←
+
+                    </a>
+
+
+                    <div class="avatar-wrapper">
+
+                        <div class="conversation-avatar large-avatar">
+
+                            @Model.OtherUser.Name.Substring(0, 1).ToUpper()
+
+                        </div>
+
+                        <span class="online-indicator offline"
+                              id="headerOnlineIndicator">
+                        </span>
+
+                    </div>
+
+
+                    <div class="conversation-user-details">
+
+                        <h2>
+                            @Model.OtherUser.Name
+                        </h2>
+
+
+                        <span class="conversation-subtitle">
+
+                            @(Model.OtherUser.Role == "ADMIN"
+                                ? "Administrator"
+                                : "Chat participant")
+
+                        </span>
+
+
+                        <span class="signal-status"
+                              id="connectionStatus">
+
+                            <i></i>
+
+                            Connecting...
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- HEADER ACTIONS -->
+
+                <div class="conversation-actions">
+
+
+                    <!-- SEARCH MESSAGES -->
+
+                    <button type="button"
+                            class="header-action"
+                            id="messageSearchButton"
+                            title="Search messages">
+
+                        🔍
+
+                    </button>
+
+
+                    <!-- WALLPAPER -->
+
+                    <button type="button"
+                            class="header-action"
+                            id="wallpaperButton"
+                            title="Change wallpaper">
+
+                        🎨
+
+                    </button>
+
+
+                    <!-- SETTINGS -->
+
+                    <button type="button"
+                            class="header-action"
+                            id="chatOptionsButton"
+                            title="Chat settings">
+
+                        ⋮
+
+                    </button>
+
+
+                    <!-- SETTINGS MENU -->
+
+                    <div class="conversation-menu"
+                         id="conversationMenu">
+
+
+                        <div style="
+                            padding:10px 10px 7px;
+                            color:#9299aa;
+                            font-size:10px;
+                            font-weight:700;
+                            text-transform:uppercase;
+                            letter-spacing:.5px;">
+                            Chat settings
+                        </div>
+
+
+                        <button type="button"
+                                id="menuWallpaper">
+
+                            🖼️
+
+                            <span>
+                                Change wallpaper
+                            </span>
+
+                        </button>
+
+
+                        <button type="button"
+                                id="menuTheme">
+
+                            🌙
+
+                            <span id="themeMenuText">
+                                Dark mode
+                            </span>
+
+                        </button>
+
+
+                        <button type="button"
+                                id="menuResetWallpaper">
+
+                            ↺
+
+                            <span>
+                                Reset wallpaper
+                            </span>
+
+                        </button>
+
+
+                        <!-- DELETE CHAT -->
+
+                        <form asp-controller="Chat"
+                              asp-action="DeleteChat"
+                              method="post"
+                              id="deleteChatForm">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="conversationId"
+                                   value="@Model.ConversationId" />
+
+                            <button type="button"
+                                    id="deleteChatButton"
+                                    class="delete-chat-item">
+
+                                🗑️
+
+                                <span>
+                                    Delete Chat
+                                </span>
+
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+
+
+            <!-- =================================================
+                 MESSAGE SEARCH BAR
+            ================================================== -->
+
+            <div class="message-search-bar"
+                 id="messageSearchBar">
+
+                <span>
+                    🔍
+                </span>
+
+                <input type="text"
+                       id="messageSearchInput"
+                       placeholder="Search messages..." />
+
+                <span class="search-count"
+                      id="messageSearchCount">
+                </span>
+
+                <button type="button"
+                        id="closeMessageSearch">
+
+                    ×
+
+                </button>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 MESSAGES
+            ================================================== -->
+
+            <section class="messages-area"
+                     id="messagesArea">
+
+
+                @if (Model.Messages.Any())
+                {
+                    foreach (var message in Model.Messages)
+                    {
+                        var isMine =
+                            message.SenderId == currentUserId;
+
+                        <div class="message-row @(isMine ? "mine" : "theirs")"
+                             data-message-id="@message.Id"
+                             data-sender-id="@message.SenderId">
+
+                            <div class="message-bubble">
+
+
+                                <div class="message-text">
+                                    @message.MessageText
+                                </div>
+
+
+                                <div class="message-meta">
+
+                                    <span class="message-time">
+
+                                        @message.SentAt.ToString("hh:mm tt")
+
+                                    </span>
+
+
+                                    @if (isMine)
+                                    {
+                                        <span class="message-status"
+                                              data-status="@message.Status">
+
+                                            @if (message.Status == "Read")
+                                            {
+                                                <span class="read-status">
+                                                    ✓✓
+                                                </span>
+                                            }
+                                            else if (message.Status == "Delivered")
+                                            {
+                                                <span class="delivered-status">
+                                                    ✓✓
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span>
+                                                    ✓
+                                                </span>
+                                            }
+
+                                        </span>
+                                    }
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="no-messages">
+
+                        <div class="no-messages-icon">
+                            💬
+                        </div>
+
+                        <h3>
+                            Start a conversation
+                        </h3>
+
+                        <p>
+                            Say hello and make the first move.
+                        </p>
+
+                        <button type="button"
+                                class="start-message-button"
+                                id="startMessageButton">
+
+                            Say hello 👋
+
+                        </button>
+
+                    </div>
+                }
+
+            </section>
+
+
+
+            <!-- =================================================
+                 TYPING INDICATOR
+            ================================================== -->
+
+            <div class="typing-indicator"
+                 id="typingIndicator">
+
+                <span></span>
+                <span></span>
+                <span></span>
+
+                <label>
+                    @Model.OtherUser.Name is typing...
+                </label>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 MESSAGE FORM
+            ================================================== -->
+
+            <form asp-controller="Chat"
+                  asp-action="SendMessage"
+                  method="post"
+                  class="message-form"
+                  id="messageForm">
+
+                @Html.AntiForgeryToken()
+
+
+                <input type="hidden"
+                       name="conversationId"
+                       value="@Model.ConversationId" />
+
+
+                <div class="message-input-wrapper">
+
+
+                    <!-- EMOJI -->
+
+                    <button type="button"
+                            class="composer-icon"
+                            id="emojiButton"
+                            title="Emoji">
+
+                        😊
+
+                    </button>
+
+
+                    <!-- ATTACH / MEDIA -->
+
+                    <button type="button"
+                            class="composer-icon"
+                            id="mediaButton"
+                            title="GIFs & Stickers">
+
+                        📎
+
+                    </button>
+
+
+                    <!-- MESSAGE -->
+
+                    <textarea name="messageText"
+                              id="messageText"
+                              placeholder="Write a message..."
+                              autocomplete="off"
+                              maxlength="2000"
+                              rows="1"
+                              required></textarea>
+
+
+                    <!-- SEND -->
+
+                    <button type="submit"
+                            class="send-button"
+                            title="Send message">
+
+                        <span>
+                            ➤
+                        </span>
+
+                    </button>
+
+                </div>
+
+
+                <div class="composer-hint">
+
+                    Press Enter to send
+
+                </div>
+
+
+                <!-- =================================================
+                     MEDIA PICKER
+                ================================================== -->
+
+                <div class="media-picker"
+                     id="mediaPicker">
+
+
+                    <div class="media-picker-header">
+
+                        <div class="media-tabs">
+
+                            <button type="button"
+                                    class="media-tab active"
+                                    data-tab="emoji">
+
+                                Emoji
+
+                            </button>
+
+                            <button type="button"
+                                    class="media-tab"
+                                    data-tab="stickers">
+
+                                Stickers
+
+                            </button>
+
+                            <button type="button"
+                                    class="media-tab"
+                                    data-tab="gif">
+
+                                GIF
+
+                            </button>
+
+                        </div>
+
+
+                        <button type="button"
+                                id="closeMediaPicker">
+
+                            ×
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- EMOJI TAB -->
+
+                    <div class="media-content active"
+                         data-content="emoji">
+
+                        <div class="emoji-category">
+                            Recently used
+                        </div>
+
+                        <div class="emoji-grid">
+
+                            @foreach (var emoji in new[]
+                            {
+                                "😀","😃","😄","😁","😆","😅","😂","🤣",
+                                "😊","😇","🙂","🙃","😉","😌","😍","🥰",
+                                "😘","😎","🤔","😴","😭","😡","🤗","🤩",
+                                "👍","👎","👏","🙌","🙏","❤️","🔥","✨",
+                                "🎉","💯","💙","💜","💚","🫶","👋","💪"
+                            })
+                            {
+                                <button type="button"
+                                        class="emoji-item">
+
+                                    @emoji
+
+                                </button>
+                            }
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- STICKERS -->
+
+                    <div class="media-content"
+                         data-content="stickers">
+
+                        <div class="emoji-category">
+                            Stickers
+                        </div>
+
+
+                        <div class="sticker-grid">
+
+                            <button type="button"
+                                    class="sticker-item">
+                                😂
+                            </button>
+
+                            <button type="button"
+                                    class="sticker-item">
+                                ❤️
+                            </button>
+
+                            <button type="button"
+                                    class="sticker-item">
+                                🔥
+                            </button>
+
+                            <button type="button"
+                                    class="sticker-item">
+                                🥰
+                            </button>
+
+                            <button type="button"
+                                    class="sticker-item">
+                                🤣
+                            </button>
+
+                            <button type="button"
+                                    class="sticker-item">
+                                😎
+                            </button>
+
+                            <button type="button"
+                                    class="sticker-item">
+                                🎉
+                            </button>
+
+                            <button type="button"
+                                    class="sticker-item">
+                                💯
+                            </button>
+
+                        </div>
+
+
+                        <div class="sticker-note">
+                            Tap a sticker to add it to your message.
+                        </div>
+
+                    </div>
+
+
+                    <!-- GIF -->
+
+                    <div class="media-content"
+                         data-content="gif">
+
+                        <div class="gif-content">
+
+                            <div class="gif-icon">
+                                GIF
+                            </div>
+
+                            <h3>
+                                Send a GIF
+                            </h3>
+
+                            <p>
+                                Paste a GIF URL from GIPHY or Tenor.
+                            </p>
+
+
+                            <div class="gif-url-row">
+
+                                <input type="url"
+                                       id="gifUrl"
+                                       placeholder="Paste GIF URL..." />
+
+                                <button type="button"
+                                        id="addGifButton">
+
+                                    Add
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+
+<!-- =============================================================
+     WALLPAPER PANEL
+============================================================== -->
+
+<div class="wallpaper-panel"
+     id="wallpaperPanel">
+
+
+    <div class="wallpaper-panel-header">
+
+        <div>
+
+            <strong>
+                Chat appearance
+            </strong>
+
+            <span>
+                Choose a look for this conversation
+            </span>
+
+        </div>
+
+
+        <button type="button"
+                id="closeWallpaper">
+
+            ×
+
+        </button>
+
+    </div>
+
+
+    <!-- WALLPAPER TABS -->
+
+    <div class="wallpaper-tabs">
+
+        <button type="button"
+                class="wallpaper-tab active"
+                data-wallpaper-tab="presets">
+
+            Presets
+
+        </button>
+
+        <button type="button"
+                class="wallpaper-tab"
+                data-wallpaper-tab="online">
+
+            Online
+
+        </button>
+
+        <button type="button"
+                class="wallpaper-tab"
+                data-wallpaper-tab="custom">
+
+            Custom
+
+        </button>
+
+    </div>
+
+
+    <!-- PRESETS -->
+
+    <div class="wallpaper-content active"
+         data-wallpaper-content="presets">
+
+        <div class="wallpaper-grid">
+
+            <button type="button"
+                    class="wallpaper-option wallpaper-default"
+                    data-wallpaper="default">
+
+                <span>
+                    Default
+                </span>
+
+            </button>
+
+
+            <button type="button"
+                    class="wallpaper-option wallpaper-purple"
+                    data-wallpaper="purple">
+
+                <span>
+                    Lavender
+                </span>
+
+            </button>
+
+
+            <button type="button"
+                    class="wallpaper-option wallpaper-blue"
+                    data-wallpaper="blue">
+
+                <span>
+                    Ocean
+                </span>
+
+            </button>
+
+
+            <button type="button"
+                    class="wallpaper-option wallpaper-sunset"
+                    data-wallpaper="sunset">
+
+                <span>
+                    Sunset
+                </span>
+
+            </button>
+
+
+            <button type="button"
+                    class="wallpaper-option wallpaper-night"
+                    data-wallpaper="night">
+
+                <span>
+                    Midnight
+                </span>
+
+            </button>
+
+
+            <button type="button"
+                    class="wallpaper-option wallpaper-green"
+                    data-wallpaper="green">
+
+                <span>
+                    Emerald
+                </span>
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ONLINE WALLPAPER -->
+
+    <div class="wallpaper-content"
+         data-wallpaper-content="online">
+
+        <div class="online-wallpaper-box">
+
+            <div class="online-wallpaper-icon">
+                🌐
+            </div>
+
+            <h3>
+                Online wallpaper
+            </h3>
+
+            <p>
+                Paste an image URL to use any online wallpaper.
+            </p>
+
+
+            <div class="wallpaper-url-input">
+
+                <input type="url"
+                       id="onlineWallpaperUrl"
+                       placeholder="https://..." />
+
+                <button type="button"
+                        id="applyOnlineWallpaper">
+
+                    Apply
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- CUSTOM WALLPAPER -->
+
+    <div class="wallpaper-content"
+         data-wallpaper-content="custom">
+
+        <div class="custom-wallpaper-box">
+
+            <div class="online-wallpaper-icon">
+                🖼️
+            </div>
+
+            <h3>
+                Your own image
+            </h3>
+
+            <p>
+                Upload an image and use it as your chat wallpaper.
+            </p>
+
+
+            <label class="upload-wallpaper-button">
+
+                <span>
+                    ＋
+                </span>
+
+                Upload wallpaper
+
+                <input type="file"
+                       id="wallpaperUpload"
+                       accept="image/png,image/jpeg,image/webp" />
+
+            </label>
+
+
+            <small>
+                Stored only in this browser.
+            </small>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =============================================================
+     SIGNALR VARIABLES
+============================================================== -->
+
+<script>
+
+    window.chatConversationId =
+        @Model.ConversationId;
+
+    window.currentUserId =
+        @currentUserId;
+
+    window.otherUserId =
+        @Model.OtherUser.Id;
+
+</script>
+
+
+<!-- SIGNALR -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js">
+</script>
+
+
+<script src="~/js/chat.js"></script>
+
+
+
+<!-- =============================================================
+     UI SCRIPT
+     Does NOT touch SignalR
+============================================================== -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const messagesArea =
+        document.getElementById("messagesArea");
+
+    const messageInput =
+        document.getElementById("messageText");
+
+    const userSearch =
+        document.getElementById("userSearch");
+
+    const userItems =
+        document.querySelectorAll(".user-item");
+
+    const emptyUsers =
+        document.getElementById("emptyUsers");
+
+
+    /* =====================================================
+       USER SEARCH
+    ====================================================== */
+
+    userSearch?.addEventListener(
+        "input",
+        function () {
+
+            const value =
+                this.value
+                    .toLowerCase()
+                    .trim();
+
+            let visible = 0;
+
+            userItems.forEach(function (item) {
+
+                const name =
+                    item.dataset.name || "";
+
+                const match =
+                    name.includes(value);
+
+                item.style.display =
+                    match ? "flex" : "none";
+
+                if (match) {
+                    visible++;
+                }
+
+            });
+
+
+            if (emptyUsers) {
+
+                emptyUsers.style.display =
+                    visible === 0
+                        ? "flex"
+                        : "none";
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       SCROLL
+    ====================================================== */
+
+    if (messagesArea) {
+
+        messagesArea.scrollTop =
+            messagesArea.scrollHeight;
+
+    }
+
+
+    /* =====================================================
+       AUTO RESIZE TEXTAREA
+    ====================================================== */
+
+    function resizeMessageBox() {
+
+        if (!messageInput) {
+            return;
+        }
+
+        messageInput.style.height =
+            "auto";
+
+        messageInput.style.height =
+            Math.min(
+                messageInput.scrollHeight,
+                140
+            ) + "px";
+
+    }
+
+
+    messageInput?.addEventListener(
+        "input",
+        resizeMessageBox
+    );
+
+
+    /* =====================================================
+       ENTER SEND / SHIFT+ENTER NEW LINE
+    ====================================================== */
+
+    messageInput?.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Enter" &&
+                !event.shiftKey
+            ) {
+
+                event.preventDefault();
+
+                const form =
+                    document.getElementById(
+                        "messageForm"
+                    );
+
+                if (
+                    this.value.trim() &&
+                    form
+                ) {
+
+                    form.requestSubmit();
+
+                }
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       EMOJI PICKER
+    ====================================================== */
+
+    const emojiButton =
+        document.getElementById("emojiButton");
+
+    const mediaButton =
+        document.getElementById("mediaButton");
+
+    const mediaPicker =
+        document.getElementById("mediaPicker");
+
+    const closeMediaPicker =
+        document.getElementById(
+            "closeMediaPicker"
+        );
+
+
+    emojiButton?.addEventListener(
+        "click",
+        function () {
+
+            mediaPicker?.classList.toggle(
+                "show"
+            );
+
+            activateMediaTab("emoji");
+
+        }
+    );
+
+
+    mediaButton?.addEventListener(
+        "click",
+        function () {
+
+            mediaPicker?.classList.toggle(
+                "show"
+            );
+
+        }
+    );
+
+
+    closeMediaPicker?.addEventListener(
+        "click",
+        function () {
+
+            mediaPicker?.classList.remove(
+                "show"
+            );
+
+        }
+    );
+
+
+    /* =====================================================
+       MEDIA TABS
+    ====================================================== */
+
+    const mediaTabs =
+        document.querySelectorAll(
+            ".media-tab"
+        );
+
+    const mediaContents =
+        document.querySelectorAll(
+            ".media-content"
+        );
+
+
+    function activateMediaTab(tabName) {
+
+        mediaTabs.forEach(function (tab) {
+
+            tab.classList.toggle(
+                "active",
+                tab.dataset.tab === tabName
+            );
+
+        });
+
+
+        mediaContents.forEach(function (content) {
+
+            content.classList.toggle(
+                "active",
+                content.dataset.content === tabName
+            );
+
+        });
+
+    }
+
+
+    mediaTabs.forEach(function (tab) {
+
+        tab.addEventListener(
+            "click",
+            function () {
+
+                activateMediaTab(
+                    this.dataset.tab
+                );
+
+            }
+        );
+
+    });
+
+
+    /* =====================================================
+       EMOJI / STICKERS
+    ====================================================== */
+
+    document.querySelectorAll(
+        ".emoji-item, .sticker-item"
+    ).forEach(function (button) {
+
+        button.addEventListener(
+            "click",
+            function () {
+
+                if (!messageInput) {
+                    return;
+                }
+
+                messageInput.value +=
+                    this.textContent.trim();
+
+                messageInput.focus();
+
+                resizeMessageBox();
+
+            }
+        );
+
+    });
+
+
+    /* =====================================================
+       GIF
+    ====================================================== */
+
+    const addGifButton =
+        document.getElementById(
+            "addGifButton"
+        );
+
+    const gifUrl =
+        document.getElementById(
+            "gifUrl"
+        );
+
+
+    addGifButton?.addEventListener(
+        "click",
+        function () {
+
+            const url =
+                gifUrl?.value.trim();
+
+            if (!url || !messageInput) {
+                return;
+            }
+
+            messageInput.value +=
+                (messageInput.value ? " " : "") +
+                url;
+
+            gifUrl.value = "";
+
+            messageInput.focus();
+
+            resizeMessageBox();
+
+        }
+    );
+
+
+    /* =====================================================
+       WALLPAPER
+    ====================================================== */
+
+    const wallpaperButton =
+        document.getElementById(
+            "wallpaperButton"
+        );
+
+    const wallpaperPanel =
+        document.getElementById(
+            "wallpaperPanel"
+        );
+
+    const closeWallpaper =
+        document.getElementById(
+            "closeWallpaper"
+        );
+
+
+    wallpaperButton?.addEventListener(
+        "click",
+        function () {
+
+            wallpaperPanel?.classList.toggle(
+                "show"
+            );
+
+        }
+    );
+
+
+    closeWallpaper?.addEventListener(
+        "click",
+        function () {
+
+            wallpaperPanel?.classList.remove(
+                "show"
+            );
+
+        }
+    );
+
+
+    /* =====================================================
+       WALLPAPER TABS
+    ====================================================== */
+
+    const wallpaperTabs =
+        document.querySelectorAll(
+            ".wallpaper-tab"
+        );
+
+    const wallpaperContents =
+        document.querySelectorAll(
+            ".wallpaper-content"
+        );
+
+
+    wallpaperTabs.forEach(function (tab) {
+
+        tab.addEventListener(
+            "click",
+            function () {
+
+                const target =
+                    this.dataset.wallpaperTab;
+
+
+                wallpaperTabs.forEach(
+                    function (item) {
+
+                        item.classList.toggle(
+                            "active",
+                            item === tab
+                        );
+
+                    }
+                );
+
+
+                wallpaperContents.forEach(
+                    function (content) {
+
+                        content.classList.toggle(
+                            "active",
+                            content.dataset.wallpaperContent === target
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+    });
+
+
+    /* =====================================================
+       APPLY PRESET WALLPAPER
+    ====================================================== */
+
+    document.querySelectorAll(
+        ".wallpaper-option"
+    ).forEach(function (option) {
+
+        option.addEventListener(
+            "click",
+            function () {
+
+                if (!messagesArea) {
+                    return;
+                }
+
+                const wallpaper =
+                    this.dataset.wallpaper;
+
+
+                messagesArea.classList.remove(
+                    "wallpaper-purple",
+                    "wallpaper-blue",
+                    "wallpaper-sunset",
+                    "wallpaper-night",
+                    "wallpaper-green",
+                    "wallpaper-image"
+                );
+
+
+                if (
+                    wallpaper !== "default"
+                ) {
+
+                    messagesArea.classList.add(
+                        "wallpaper-" + wallpaper
+                    );
+
+                }
+
+
+                localStorage.setItem(
+                    "chatWallpaper",
+                    wallpaper
+                );
+
+                localStorage.removeItem(
+                    "chatWallpaperImage"
+                );
+
+            }
+        );
+
+    });
+
+
+    /* =====================================================
+       ONLINE WALLPAPER
+    ====================================================== */
+
+    const applyOnlineWallpaper =
+        document.getElementById(
+            "applyOnlineWallpaper"
+        );
+
+    const onlineWallpaperUrl =
+        document.getElementById(
+            "onlineWallpaperUrl"
+        );
+
+
+    applyOnlineWallpaper?.addEventListener(
+        "click",
+        function () {
+
+            const url =
+                onlineWallpaperUrl?.value.trim();
+
+            if (
+                !url ||
+                !messagesArea
+            ) {
+                return;
+            }
+
+
+            messagesArea.classList.remove(
+                "wallpaper-purple",
+                "wallpaper-blue",
+                "wallpaper-sunset",
+                "wallpaper-night",
+                "wallpaper-green"
+            );
+
+
+            messagesArea.classList.add(
+                "wallpaper-image"
+            );
+
+
+            messagesArea.style.backgroundImage =
+                `url("${url}")`;
+
+
+            localStorage.setItem(
+                "chatWallpaperImage",
+                url
+            );
+
+
+            localStorage.setItem(
+                "chatWallpaper",
+                "image"
+            );
+
+        }
+    );
+
+
+    /* =====================================================
+       CUSTOM WALLPAPER
+    ====================================================== */
+
+    const wallpaperUpload =
+        document.getElementById(
+            "wallpaperUpload"
+        );
+
+
+    wallpaperUpload?.addEventListener(
+        "change",
+        function () {
+
+            const file =
+                this.files?.[0];
+
+            if (
+                !file ||
+                !messagesArea
+            ) {
+                return;
+            }
+
+
+            const reader =
+                new FileReader();
+
+
+            reader.onload =
+                function (event) {
+
+                    const image =
+                        event.target.result;
+
+
+                    messagesArea.classList.remove(
+                        "wallpaper-purple",
+                        "wallpaper-blue",
+                        "wallpaper-sunset",
+                        "wallpaper-night",
+                        "wallpaper-green"
+                    );
+
+
+                    messagesArea.classList.add(
+                        "wallpaper-image"
+                    );
+
+
+                    messagesArea.style.backgroundImage =
+                        `url("${image}")`;
+
+
+                    localStorage.setItem(
+                        "chatWallpaperImage",
+                        image
+                    );
+
+
+                    localStorage.setItem(
+                        "chatWallpaper",
+                        "image"
+                    );
+
+                };
+
+
+            reader.readAsDataURL(file);
+
+        }
+    );
+
+
+    /* =====================================================
+       RESTORE WALLPAPER
+    ====================================================== */
+
+    const savedWallpaper =
+        localStorage.getItem(
+            "chatWallpaper"
+        );
+
+    const savedImage =
+        localStorage.getItem(
+            "chatWallpaperImage"
+        );
+
+
+    if (
+        savedWallpaper === "image" &&
+        savedImage &&
+        messagesArea
+    ) {
+
+        messagesArea.classList.add(
+            "wallpaper-image"
+        );
+
+        messagesArea.style.backgroundImage =
+            `url("${savedImage}")`;
+
+    }
+    else if (
+        savedWallpaper &&
+        savedWallpaper !== "default" &&
+        messagesArea
+    ) {
+
+        messagesArea.classList.add(
+            "wallpaper-" +
+            savedWallpaper
+        );
+
+    }
+
+
+    /* =====================================================
+       DARK / LIGHT THEME
+    ====================================================== */
+
+    const menuTheme =
+        document.getElementById(
+            "menuTheme"
+        );
+
+    const themeMenuText =
+        document.getElementById(
+            "themeMenuText"
+        );
+
+
+    function updateThemeText() {
+
+        const dark =
+            document.body.classList.contains(
+                "chat-dark"
+            );
+
+        if (themeMenuText) {
+
+            themeMenuText.textContent =
+                dark
+                    ? "Light mode"
+                    : "Dark mode";
+
+        }
+
+    }
+
+
+    if (
+        localStorage.getItem(
+            "chatTheme"
+        ) === "dark"
+    ) {
+
+        document.body.classList.add(
+            "chat-dark"
+        );
+
+    }
+
+
+    updateThemeText();
+
+
+    menuTheme?.addEventListener(
+        "click",
+        function () {
+
+            document.body.classList.toggle(
+                "chat-dark"
+            );
+
+
+            localStorage.setItem(
+                "chatTheme",
+                document.body.classList.contains(
+                    "chat-dark"
+                )
+                    ? "dark"
+                    : "light"
+            );
+
+
+            updateThemeText();
+
+        }
+    );
+
+
+    /* =====================================================
+       CHAT SETTINGS MENU
+    ====================================================== */
+
+    const chatOptionsButton =
+        document.getElementById(
+            "chatOptionsButton"
+        );
+
+    const conversationMenu =
+        document.getElementById(
+            "conversationMenu"
+        );
+
+
+    chatOptionsButton?.addEventListener(
+        "click",
+        function (event) {
+
+            event.stopPropagation();
+
+            conversationMenu?.classList.toggle(
+                "show"
+            );
+
+        }
+    );
+
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                conversationMenu &&
+                !conversationMenu.contains(event.target) &&
+                event.target !== chatOptionsButton
+            ) {
+
+                conversationMenu.classList.remove(
+                    "show"
+                );
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       SETTINGS -> WALLPAPER
+    ====================================================== */
+
+    document.getElementById(
+        "menuWallpaper"
+    )?.addEventListener(
+        "click",
+        function () {
+
+            conversationMenu?.classList.remove(
+                "show"
+            );
+
+            wallpaperPanel?.classList.add(
+                "show"
+            );
+
+        }
+    );
+
+
+    /* =====================================================
+       RESET WALLPAPER
+    ====================================================== */
+
+    document.getElementById(
+        "menuResetWallpaper"
+    )?.addEventListener(
+        "click",
+        function () {
+
+            if (messagesArea) {
+
+                messagesArea.classList.remove(
+                    "wallpaper-purple",
+                    "wallpaper-blue",
+                    "wallpaper-sunset",
+                    "wallpaper-night",
+                    "wallpaper-green",
+                    "wallpaper-image"
+                );
+
+                messagesArea.style.backgroundImage =
+                    "";
+
+            }
+
+
+            localStorage.removeItem(
+                "chatWallpaper"
+            );
+
+            localStorage.removeItem(
+                "chatWallpaperImage"
+            );
+
+
+            conversationMenu?.classList.remove(
+                "show"
+            );
+
+        }
+    );
+
+
+    /* =====================================================
+       DELETE CHAT
+    ====================================================== */
+
+    const deleteChatButton =
+        document.getElementById(
+            "deleteChatButton"
+        );
+
+    const deleteChatForm =
+        document.getElementById(
+            "deleteChatForm"
+        );
+
+
+    deleteChatButton?.addEventListener(
+        "click",
+        function () {
+
+            const confirmed =
+                confirm(
+                    "Delete this chat?\n\nAll messages in this conversation will be permanently deleted."
+                );
+
+
+            if (confirmed) {
+
+                deleteChatForm?.submit();
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       MESSAGE SEARCH
+    ====================================================== */
+
+    const messageSearchButton =
+        document.getElementById(
+            "messageSearchButton"
+        );
+
+    const messageSearchBar =
+        document.getElementById(
+            "messageSearchBar"
+        );
+
+    const messageSearchInput =
+        document.getElementById(
+            "messageSearchInput"
+        );
+
+    const messageSearchCount =
+        document.getElementById(
+            "messageSearchCount"
+        );
+
+    const closeMessageSearch =
+        document.getElementById(
+            "closeMessageSearch"
+        );
+
+
+    messageSearchButton?.addEventListener(
+        "click",
+        function () {
+
+            messageSearchBar?.classList.add(
+                "show"
+            );
+
+            messageSearchInput?.focus();
+
+        }
+    );
+
+
+    closeMessageSearch?.addEventListener(
+        "click",
+        function () {
+
+            messageSearchBar?.classList.remove(
+                "show"
+            );
+
+            if (messageSearchInput) {
+                messageSearchInput.value = "";
+            }
+
+            document.querySelectorAll(
+                ".message-row"
+            ).forEach(function (row) {
+
+                row.style.display = "flex";
+
+            });
+
+            if (messageSearchCount) {
+                messageSearchCount.textContent = "";
+            }
+
+        }
+    );
+
+
+    messageSearchInput?.addEventListener(
+        "input",
+        function () {
+
+            const value =
+                this.value
+                    .toLowerCase()
+                    .trim();
+
+
+            let count = 0;
+
+
+            document.querySelectorAll(
+                ".message-row"
+            ).forEach(function (row) {
+
+                const text =
+                    row.querySelector(
+                        ".message-text"
+                    )?.textContent
+                    .toLowerCase() || "";
+
+
+                const match =
+                    !value ||
+                    text.includes(value);
+
+
+                row.style.display =
+                    match ? "flex" : "none";
+
+
+                if (
+                    match &&
+                    value
+                ) {
+
+                    count++;
+
+                }
+
+            });
+
+
+            if (messageSearchCount) {
+
+                messageSearchCount.textContent =
+                    value
+                        ? count + " found"
+                        : "";
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       SAY HELLO
+    ====================================================== */
+
+    document.getElementById(
+        "startMessageButton"
+    )?.addEventListener(
+        "click",
+        function () {
+
+            if (!messageInput) {
+                return;
+            }
+
+            messageInput.value =
+                "Hello 👋";
+
+            messageInput.focus();
+
+            resizeMessageBox();
+
+        }
+    );
+
+
+    /* =====================================================
+       APPEARANCE BUTTON
+    ====================================================== */
+
+    document.getElementById(
+        "appearanceButton"
+    )?.addEventListener(
+        "click",
+        function () {
+
+            wallpaperPanel?.classList.add(
+                "show"
+            );
+
+        }
+    );
+
+});
+
+</script>
+
+</body>
+</html>

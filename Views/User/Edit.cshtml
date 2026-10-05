@@ -1,0 +1,140 @@
+﻿@model ChatApplication.Models.User
+
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<link rel="stylesheet" href="~/css/user.css" />
+
+<div class="user-page">
+
+    <div class="user-container">
+
+        <div class="user-page-header">
+
+            <div>
+                <h1>Edit User</h1>
+
+                <p>
+                    Update the user's account information.
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="user-card user-form-card">
+
+            <form asp-action="Edit"
+                  method="post">
+
+                <input type="hidden"
+                       asp-for="Id" />
+
+
+                <div asp-validation-summary="ModelOnly"
+                     class="user-validation">
+                </div>
+
+
+                <div class="user-form-group">
+
+                    <label asp-for="Name"
+                           class="user-form-label">
+                        Full Name
+                    </label>
+
+                    <input asp-for="Name"
+                           class="user-form-input" />
+
+                    <span asp-validation-for="Name"
+                          class="user-validation">
+                    </span>
+
+                </div>
+
+
+                <div class="user-form-group">
+
+                    <label asp-for="Email"
+                           class="user-form-label">
+                        Email Address
+                    </label>
+
+                    <input asp-for="Email"
+                           class="user-form-input" />
+
+                    <span asp-validation-for="Email"
+                          class="user-validation">
+                    </span>
+
+                </div>
+
+
+                <div class="user-form-group">
+
+                    <label asp-for="PhoneNumber"
+                           class="user-form-label">
+                        Phone Number
+                    </label>
+
+                    <input asp-for="PhoneNumber"
+                           class="user-form-input" />
+
+                    <span asp-validation-for="PhoneNumber"
+                          class="user-validation">
+                    </span>
+
+                </div>
+
+
+                <div class="user-form-group">
+
+                    <label asp-for="Role"
+                           class="user-form-label">
+                        Role
+                    </label>
+
+                    <select asp-for="Role"
+                            class="user-form-select">
+
+                        <option value="USER">
+                            User
+                        </option>
+
+                        <option value="ADMIN">
+                            Admin
+                        </option>
+
+                    </select>
+
+                    <span asp-validation-for="Role"
+                          class="user-validation">
+                    </span>
+
+                </div>
+
+
+                <div class="user-form-actions">
+
+                    <a asp-action="Index"
+                       class="user-back-btn">
+                        ← Back to Users
+                    </a>
+
+                    <button type="submit"
+                            class="user-primary-btn">
+
+                        Save Changes
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>

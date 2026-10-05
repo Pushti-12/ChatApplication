@@ -1,0 +1,498 @@
+﻿@model IEnumerable<ChatApplication.Models.User>
+
+@{
+    Layout = null;
+    ViewData["Title"] = "Chat";
+    var currentUserId = ViewBag.CurrentUserId;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>ChatApplication</title>
+
+    <link rel="stylesheet"
+          href="~/css/chat.css" />
+
+</head>
+
+<body>
+
+    <div class="chat-page">
+
+        <div class="chat-shell">
+
+            <!-- =====================================================
+                 SIDEBAR
+            ====================================================== -->
+
+            <aside class="chat-sidebar">
+
+                <!-- HEADER -->
+
+                <div class="sidebar-header">
+
+                    <div class="brand">
+
+                        <div class="brand-icon">
+                            C
+                        </div>
+
+                        <div class="brand-text">
+
+                            <h2>
+                                ChatApplication
+                            </h2>
+
+                            <span>
+                                Messages
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <button type="button"
+                            class="sidebar-menu-button"
+                            id="sidebarMenuButton"
+                            aria-label="Chat settings">
+
+                        ⋮
+
+                    </button>
+
+                </div>
+
+
+                <!-- SIDEBAR MENU -->
+
+                <div class="sidebar-menu"
+                     id="sidebarMenu">
+
+                    <button type="button"
+                            id="toggleChatTheme">
+
+                        <span>🌙</span>
+                        <span>Dark appearance</span>
+
+                    </button>
+
+                    <button type="button"
+                            id="resetChatAppearance">
+
+                        <span>↻</span>
+                        <span>Reset appearance</span>
+
+                    </button>
+
+                </div>
+
+
+                <!-- SEARCH -->
+
+                <div class="sidebar-search">
+
+                    <div class="search-box">
+
+                        <span class="search-icon">
+                            ⌕
+                        </span>
+
+                        <input type="text"
+                               id="userSearch"
+                               placeholder="Search people..."
+                               autocomplete="off" />
+
+                        <button type="button"
+                                class="clear-search"
+                                id="clearUserSearch"
+                                aria-label="Clear search">
+
+                            ×
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- USER LIST -->
+
+                <div class="user-list"
+                     id="userList">
+
+                    @if (Model.Any())
+                    {
+                        foreach (var user in Model)
+                        {
+                            var initial =
+                                string.IsNullOrWhiteSpace(user.Name)
+                                    ? "?"
+                                    : user.Name.Substring(0, 1).ToUpper();
+
+                            <a class="user-item"
+                               asp-controller="Chat"
+                               asp-action="Conversation"
+                               asp-route-userId="@user.Id"
+                               data-name="@user.Name.ToLower()">
+
+                                <div class="avatar-wrapper">
+
+                                    <div class="user-avatar">
+                                        @initial
+                                    </div>
+
+                                    <span class="avatar-status"></span>
+
+                                </div>
+
+
+                                <div class="user-info">
+
+                                    <strong>
+                                        @user.Name
+                                    </strong>
+
+                                    <span>
+                                        @(user.Role == "ADMIN"
+                                            ? "Administrator"
+                                            : "Available to chat")
+                                    </span>
+
+                                </div>
+
+
+                                <div class="user-arrow">
+                                    ›
+                                </div>
+
+                            </a>
+                        }
+
+                        <div class="no-search-results"
+                             id="noSearchResults">
+
+                            <div>
+                                🔎
+                            </div>
+
+                            <strong>
+                                No people found
+                            </strong>
+
+                            <span>
+                                Try another name.
+                            </span>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-users">
+
+                            <div class="empty-icon">
+                                👥
+                            </div>
+
+                            <h3>
+                                No users yet
+                            </h3>
+
+                            <p>
+                                Other registered users will appear here.
+                            </p>
+
+                        </div>
+                    }
+
+                </div>
+
+
+                <!-- FOOTER -->
+
+                <div class="sidebar-footer">
+
+                    <a asp-controller="Home"
+                       asp-action="Index"
+                       class="footer-action">
+
+                        <span>
+                            ←
+                        </span>
+
+                        <span>
+                            Home
+                        </span>
+
+                    </a>
+
+
+                    <form asp-controller="Auth"
+                          asp-action="Logout"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit"
+                                class="footer-action logout-action">
+
+                            <span>
+                                ↪
+                            </span>
+
+                            <span>
+                                Logout
+                            </span>
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </aside>
+
+
+            <!-- =====================================================
+                 EMPTY CHAT
+            ====================================================== -->
+
+            <main class="chat-main empty-chat">
+
+                <div class="empty-chat-decoration decoration-one"></div>
+                <div class="empty-chat-decoration decoration-two"></div>
+
+                <div class="empty-chat-content">
+
+                    <div class="empty-chat-logo">
+                        💬
+                    </div>
+
+                    <div class="empty-chat-badge">
+                        PRIVATE • REAL-TIME
+                    </div>
+
+                    <h1>
+                        Start a conversation
+                    </h1>
+
+                    <p>
+                        Choose someone from your contacts
+                        and start chatting instantly.
+                    </p>
+
+                    <div class="empty-chat-features">
+
+                        <div>
+                            <span>⚡</span>
+                            Real-time messaging
+                        </div>
+
+                        <div>
+                            <span>🔒</span>
+                            Private conversations
+                        </div>
+
+                        <div>
+                            <span>😊</span>
+                            Emojis & stickers
+                        </div>
+
+                    </div>
+
+                    <div class="chat-tip">
+                        Select a person from the left panel
+                    </div>
+
+                </div>
+
+            </main>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        const searchInput =
+            document.getElementById("userSearch");
+
+        const clearSearch =
+            document.getElementById("clearUserSearch");
+
+        const userItems =
+            document.querySelectorAll(".user-item");
+
+        const noSearchResults =
+            document.getElementById("noSearchResults");
+
+
+        function filterUsers() {
+
+            const value =
+                (searchInput?.value || "")
+                    .toLowerCase()
+                    .trim();
+
+            let visibleCount = 0;
+
+            userItems.forEach(function (item) {
+
+                const name =
+                    item.dataset.name || "";
+
+                const matches =
+                    name.includes(value);
+
+                item.style.display =
+                    matches ? "flex" : "none";
+
+                if (matches) {
+                    visibleCount++;
+                }
+
+            });
+
+            if (noSearchResults) {
+
+                noSearchResults.style.display =
+                    value && visibleCount === 0
+                        ? "flex"
+                        : "none";
+
+            }
+
+        }
+
+
+        searchInput?.addEventListener(
+            "input",
+            filterUsers
+        );
+
+
+        clearSearch?.addEventListener(
+            "click",
+            function () {
+
+                if (searchInput) {
+                    searchInput.value = "";
+                    searchInput.focus();
+                    filterUsers();
+                }
+
+            }
+        );
+
+
+        /* =====================================================
+           SIDEBAR MENU
+        ====================================================== */
+
+        const sidebarMenuButton =
+            document.getElementById("sidebarMenuButton");
+
+        const sidebarMenu =
+            document.getElementById("sidebarMenu");
+
+
+        sidebarMenuButton?.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+                sidebarMenu?.classList.toggle("show");
+
+            }
+        );
+
+
+        document.addEventListener(
+            "click",
+            function () {
+
+                sidebarMenu?.classList.remove("show");
+
+            }
+        );
+
+
+        /* =====================================================
+           THEME
+        ====================================================== */
+
+        const toggleTheme =
+            document.getElementById("toggleChatTheme");
+
+        const resetAppearance =
+            document.getElementById("resetChatAppearance");
+
+
+        function applyTheme() {
+
+            const theme =
+                localStorage.getItem("chat-theme");
+
+            if (theme === "dark") {
+
+                document.body.classList.add("chat-dark");
+
+            }
+            else {
+
+                document.body.classList.remove("chat-dark");
+
+            }
+
+        }
+
+
+        applyTheme();
+
+
+        toggleTheme?.addEventListener(
+            "click",
+            function () {
+
+                const isDark =
+                    document.body.classList.toggle("chat-dark");
+
+                localStorage.setItem(
+                    "chat-theme",
+                    isDark ? "dark" : "light"
+                );
+
+                sidebarMenu?.classList.remove("show");
+
+            }
+        );
+
+
+        resetAppearance?.addEventListener(
+            "click",
+            function () {
+
+                localStorage.removeItem("chat-theme");
+
+                document.body.classList.remove("chat-dark");
+
+                sidebarMenu?.classList.remove("show");
+
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>

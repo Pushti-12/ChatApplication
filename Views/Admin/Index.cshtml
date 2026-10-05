@@ -1,0 +1,593 @@
+﻿@{
+    Layout = null;
+
+    ViewData["Title"] = "Admin Dashboard";
+
+    var adminName = User.Identity?.Name ?? "Administrator";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>Admin Dashboard - ChatApp</title>
+
+    <link rel="stylesheet"
+          href="~/css/admin.css" />
+
+</head>
+
+<body>
+
+    <div class="admin-layout">
+
+        <!-- =========================================
+         SIDEBAR
+    ========================================== -->
+
+        <aside class="admin-sidebar">
+
+            <div class="sidebar-top">
+
+                <!-- BRAND -->
+
+                <div class="brand">
+
+                    <div class="brand-icon">
+                        C
+                    </div>
+
+                    <div class="brand-text">
+
+                        <h2>ChatApp</h2>
+
+                        <span>Administration</span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- NAVIGATION -->
+
+                <nav class="admin-nav">
+
+                    <a asp-controller="Admin"
+                       asp-action="Index"
+                       class="nav-item active">
+
+                        <span class="nav-icon">▦</span>
+
+                        <span>Dashboard</span>
+
+                    </a>
+
+
+                    <a asp-controller="Admin"
+                       asp-action="Users"
+                       class="nav-item">
+
+                        <span class="nav-icon">♙</span>
+
+                        <span>Users</span>
+
+                    </a>
+
+
+                    <a asp-controller="Chat"
+                       asp-action="Index"
+                       class="nav-item">
+
+                        <span class="nav-icon">◉</span>
+
+                        <span>Conversations</span>
+
+                    </a>
+
+
+                    <a asp-controller="Chat"
+                       asp-action="Index"
+                       class="nav-item">
+
+                        <span class="nav-icon">▤</span>
+
+                        <span>Messages</span>
+
+                    </a>
+
+                </nav>
+
+            </div>
+
+
+            <!-- SIDEBAR BOTTOM -->
+
+            <div class="sidebar-bottom">
+
+                <a asp-controller="Chat"
+                   asp-action="Index"
+                   class="nav-item">
+
+                    <span class="nav-icon">💬</span>
+
+                    <span>Open Chat</span>
+
+                </a>
+
+
+                <form asp-controller="Auth"
+                      asp-action="Logout"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="logout-button">
+
+                        <span class="nav-icon">↪</span>
+
+                        <span>Logout</span>
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </aside>
+
+
+        <!-- =========================================
+         MAIN CONTENT
+    ========================================== -->
+
+        <main class="admin-main">
+
+
+            <!-- HEADER -->
+
+            <header class="admin-header">
+
+                <div class="header-content">
+
+                    <p class="eyebrow">
+                        ADMINISTRATION
+                    </p>
+
+                    <h1>
+                        Dashboard
+                    </h1>
+
+                    <p class="header-subtitle">
+                        Welcome back, @adminName. Here's what's happening today.
+                    </p>
+
+                </div>
+
+
+                <!-- ADMIN PROFILE -->
+
+                <div class="admin-profile">
+
+                    <div class="profile-avatar">
+
+                        @(adminName.Length > 0
+                            ? adminName.Substring(0, 1).ToUpper()
+                            : "A")
+
+                    </div>
+
+                    <div class="profile-details">
+
+                        <strong>
+                            @adminName
+                        </strong>
+
+                        <span>
+                            Administrator
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+
+            <!-- =========================================
+             STAT CARDS
+        ========================================== -->
+
+            <section class="stats-grid">
+
+
+                <!-- USERS -->
+
+                <a asp-controller="Admin"
+                   asp-action="Users"
+                   class="stat-card">
+
+                    <div class="stat-icon users-icon">
+                        ♙
+                    </div>
+
+                    <div class="stat-content">
+
+                        <span>
+                            Total Users
+                        </span>
+
+                        <strong>
+                            @ViewBag.TotalUsers
+                        </strong>
+
+                        <small>
+                            Registered accounts
+                        </small>
+
+                    </div>
+
+                    <span class="stat-arrow">
+                        →
+                    </span>
+
+                </a>
+
+
+                <!-- CONVERSATIONS -->
+
+                <a asp-controller="Chat"
+                   asp-action="Index"
+                   class="stat-card">
+
+                    <div class="stat-icon chat-icon">
+                        ◉
+                    </div>
+
+                    <div class="stat-content">
+
+                        <span>
+                            Conversations
+                        </span>
+
+                        <strong>
+                            @ViewBag.TotalConversations
+                        </strong>
+
+                        <small>
+                            Active conversations
+                        </small>
+
+                    </div>
+
+                    <span class="stat-arrow">
+                        →
+                    </span>
+
+                </a>
+
+
+                <!-- MESSAGES -->
+
+                <a asp-controller="Chat"
+                   asp-action="Index"
+                   class="stat-card">
+
+                    <div class="stat-icon message-icon">
+                        ✉
+                    </div>
+
+                    <div class="stat-content">
+
+                        <span>
+                            Total Messages
+                        </span>
+
+                        <strong>
+                            @ViewBag.TotalMessages
+                        </strong>
+
+                        <small>
+                            Messages exchanged
+                        </small>
+
+                    </div>
+
+                    <span class="stat-arrow">
+                        →
+                    </span>
+
+                </a>
+
+            </section>
+
+
+            <!-- =========================================
+             RECENT USERS
+        ========================================== -->
+
+            <section class="dashboard-card">
+
+                <div class="section-header">
+
+                    <div>
+
+                        <h2>
+                            Recent Users
+                        </h2>
+
+                        <p>
+                            Latest registered accounts
+                        </p>
+
+                    </div>
+
+
+                    <a asp-controller="Admin"
+                       asp-action="Users"
+                       class="view-all">
+
+                        View all
+                        <span>→</span>
+
+                    </a>
+
+                </div>
+
+
+                <div class="table-wrapper">
+
+                    <table class="admin-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    User
+                                </th>
+
+                                <th>
+                                    Email
+                                </th>
+
+                                <th>
+                                    Role
+                                </th>
+
+                                <th>
+                                    Joined
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            @if (ViewBag.RecentUsers != null &&
+                                 ViewBag.RecentUsers.Count > 0)
+                            {
+
+                                foreach (var user in ViewBag.RecentUsers)
+                                {
+
+                                    <tr>
+
+                                        <!-- USER -->
+
+                                        <td>
+
+                                            <div class="table-user">
+
+                                                <div class="user-avatar">
+
+                                                    @(user.Name.Length > 0
+                                                        ? user.Name.Substring(0, 1).ToUpper()
+                                                        : "U")
+
+                                                </div>
+
+                                                <strong>
+                                                    @user.Name
+                                                </strong>
+
+                                            </div>
+
+                                        </td>
+
+
+                                        <!-- EMAIL -->
+
+                                        <td>
+
+                                            <span class="email-text">
+                                                @user.Email
+                                            </span>
+
+                                        </td>
+
+
+                                        <!-- ROLE -->
+
+                                        <td>
+
+                                            <span class="role-badge
+                                                @(user.Role == "ADMIN"
+                                                    ? "admin-role"
+                                                    : "user-role")">
+
+                                                @user.Role
+
+                                            </span>
+
+                                        </td>
+
+
+                                        <!-- DATE -->
+
+                                        <td>
+
+                                            <span class="date-text">
+                                                @user.CreatedAt.ToString("dd MMM yyyy")
+                                            </span>
+
+                                        </td>
+
+                                    </tr>
+
+                                }
+
+                            }
+                            else
+                            {
+
+                                <tr>
+
+                                    <td colspan="4"
+                                        class="empty-table">
+
+                                        No users registered yet.
+
+                                    </td>
+
+                                </tr>
+
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+
+            <!-- =========================================
+             QUICK ACTIONS
+        ========================================== -->
+
+            <section class="quick-actions">
+
+
+                <!-- MANAGE USERS -->
+
+                <a asp-controller="Admin"
+                   asp-action="Users"
+                   class="quick-card">
+
+                    <div class="quick-icon">
+                        +
+                    </div>
+
+                    <div class="quick-content">
+
+                        <strong>
+                            Manage Users
+                        </strong>
+
+                        <span>
+                            Create, edit and remove users
+                        </span>
+
+                    </div>
+
+                    <b>
+                        →
+                    </b>
+
+                </a>
+
+
+                <!-- OPEN CONVERSATIONS -->
+
+                <a asp-controller="Chat"
+                   asp-action="Index"
+                   class="quick-card">
+
+                    <div class="quick-icon">
+                        ◉
+                    </div>
+
+                    <div class="quick-content">
+
+                        <strong>
+                            Conversations
+                        </strong>
+
+                        <span>
+                            Open conversations with users
+                        </span>
+
+                    </div>
+
+                    <b>
+                        →
+                    </b>
+
+                </a>
+
+
+                <!-- MESSAGES -->
+
+                <a asp-controller="Chat"
+                   asp-action="Index"
+                   class="quick-card">
+
+                    <div class="quick-icon">
+                        ✉
+                    </div>
+
+                    <div class="quick-content">
+
+                        <strong>
+                            Messages
+                        </strong>
+
+                        <span>
+                            View and send messages
+                        </span>
+
+                    </div>
+
+                    <b>
+                        →
+                    </b>
+
+                </a>
+
+            </section>
+
+
+            <!-- =========================================
+             FOOTER
+        ========================================== -->
+
+            <footer class="admin-footer">
+
+                <span>
+                    © @DateTime.Now.Year ChatApp
+                </span>
+
+                <span>
+                    Administration Panel
+                </span>
+
+            </footer>
+
+        </main>
+
+    </div>
+
+
+</body>
+
+</html>
