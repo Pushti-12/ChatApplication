@@ -80,5 +80,11 @@ namespace ChatApplication.Controllers
 
             return View(messages);
         }
+
+        [Authorize(Roles = "ADMIN")]
+        public IActionResult ScriptLab()
+        {
+            return View();
+        }
     }
 }

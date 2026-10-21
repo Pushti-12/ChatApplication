@@ -4,6 +4,17 @@
     Layout = null;
     ViewData["Title"] = Model.OtherUser.Name;
     var currentUserId = ViewBag.CurrentUserId;
+
+var confidenceValue =
+        ViewBag.ChatTextPredictionConfidence;
+
+    float confidence = confidenceValue == null
+        ? 0f
+        : Convert.ToSingle(confidenceValue);
+
+    int confidencePercent =
+        (int)Math.Round(confidence * 100);
+
 }
 
 <!DOCTYPE html>
@@ -62,6 +73,111 @@
             background: #fff1f2 !important;
             color: #dc2626 !important;
         }
+        .ml-confidence-track {
+    width: 100%;
+    max-width: 240px;
+    height: 5px;
+    margin-top: 5px;
+    overflow: hidden;
+    background: rgba(128, 128, 128, 0.2);
+    border-radius: 10px;
+}
+
+.ml-confidence-fill {
+    height: 100%;
+    background: currentColor;
+    border-radius: 10px;
+    transition: width 0.25s ease;
+}
+
+        
+/* ML.NET message classification feedback */
+.ml-feedback {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 18px;
+    padding: 10px 13px;
+    border: 1px solid;
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.ml-feedback-good {
+    color: #166534;
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.ml-feedback-bad {
+    color: #9a3412;
+    background: #fff7ed;
+    border-color: #fed7aa;
+}
+
+.ml-feedback:not(.ml-feedback-good):not(.ml-feedback-bad) {
+    color: #475569;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.ml-feedback-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: rgba(128, 128, 128, 0.12);
+    font-weight: 700;
+}
+
+.ml-feedback-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ml-feedback-content strong {
+    font-size: 12px;
+}
+
+.ml-feedback-content span {
+    overflow-wrap: anywhere;
+}
+
+.ml-feedback-close {
+    flex-shrink: 0;
+    padding: 2px 6px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+body.chat-dark .ml-feedback-good {
+    color: #bbf7d0;
+    background: #142a20;
+    border-color: #28563b;
+}
+
+body.chat-dark .ml-feedback-bad {
+    color: #fed7aa;
+    background: #302016;
+    border-color: #684126;
+}
+
+body.chat-dark .ml-feedback:not(.ml-feedback-good):not(.ml-feedback-bad) {
+    color: #cbd5e1;
+    background: #202638;
+    border-color: #374151;
+}
+
     </style>
 
 </head>
@@ -600,7 +716,81 @@
                     @Model.OtherUser.Name is typing...
                 </label>
 
-            </div>
+            </div
+
+            
+<!-- ML.NET CHAT CLASSIFICATION FEEDBACK -->
+@if (ViewBag.ChatTextPrediction != null)
+{
+    var prediction = ViewBag.ChatTextPrediction.ToString();
+
+   var confidenceValue =
+    ViewBag.ChatTextPredictionConfidence?.ToString();
+
+float confidence = 0f;
+
+if (!string.IsNullOrEmpty(confidenceValue))
+{
+    float.TryParse(
+        confidenceValue,
+        System.Globalization.NumberStyles.Float,
+        System.Globalization.CultureInfo.InvariantCulture,
+        out confidence
+    );
+}
+
+int confidencePercent = (int)Math.Round(confidence * 100);
+
+    var isGood = prediction == "good";
+    var isBad = prediction == "bad";
+    var isUnavailable = prediction == "Prediction unavailable";
+
+    <div class="ml-feedback @(isGood ? "ml-feedback-good" : isBad ? "ml-feedback-bad" : "")"
+         role="status">
+
+        <span class="ml-feedback-icon">
+            @(isGood ? "✓" : isBad ? "!" : "i")
+        </span>
+
+        <div class="ml-feedback-content">
+            <strong>
+                @(isGood
+                    ? "Positive message"
+                    : isBad
+                        ? "Potentially negative message"
+                        : "Classification unavailable")
+            </strong>
+
+            <span>
+                @(isGood
+                    ? "ML.NET classified your message as good."
+                    : isBad
+                        ? "ML.NET classified your message as bad. Your message was still sent."
+                        : "Your message was sent, but classification could not be completed.")
+            </span>
+
+            @if (!isUnavailable)
+            {
+                <span class="ml-confidence-text">
+                    Estimated model confidence: @confidencePercent%
+                </span>
+
+                <div class="ml-confidence-track">
+                    <div class="ml-confidence-fill"
+                         style="width: @(confidencePercent)%;">
+                    </div>
+                </div>
+            }
+        </div>
+
+        <button type="button"
+                class="ml-feedback-close"
+                aria-label="Dismiss feedback"
+                onclick="this.parentElement.remove()">
+            ×
+        </button>
+    </div>
+}
 
 
 
@@ -2196,4 +2386,4 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 </body>
-</html>
+</html>ChatTexxt

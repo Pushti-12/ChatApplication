@@ -1,0 +1,22 @@
+﻿using Microsoft.ML.Data;
+
+namespace ChatApplication.Models
+{
+    public class ChatTextData
+    {
+        [LoadColumn(0)]
+        public string Question { get; set; } = string.Empty;
+
+        [LoadColumn(1)]
+        public string Label { get; set; } = string.Empty;
+    }
+
+    public class ChatTextPrediction
+    {
+        [ColumnName("PredictedLabel")]
+        public string PredictedLabel { get; set; } = string.Empty;
+
+        [ColumnName("Score")]
+        public float[]? Score { get; set; }
+    }
+}

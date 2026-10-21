@@ -3,7 +3,10 @@
 @{
     Layout = null;
     ViewData["Title"] = "Chat";
-    var currentUserId = ViewBag.CurrentUserId;
+
+    int? currentUserId = ViewBag.CurrentUserId != null
+        ? Convert.ToInt32(ViewBag.CurrentUserId)
+        : null;
 }
 
 <!DOCTYPE html>
@@ -16,12 +19,195 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0" />
 
+    <meta name="description"
+          content="ChatApplication real-time messaging dashboard" />
+
     <title>ChatApplication</title>
 
     <link rel="stylesheet"
           href="~/css/chat.css" />
 
+    <style>
+
+        /* =========================================================
+           SEARCH
+        ========================================================= */
+
+        .clear-search {
+            display: none;
+        }
+
+        .clear-search.show {
+            display: flex;
+        }
+
+
+        /* =========================================================
+           SIGNALR STATUS
+        ========================================================= */
+
+        .script-status {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 9999;
+
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            padding: 8px 12px;
+            border-radius: 999px;
+
+            background: rgba(15, 23, 42, 0.92);
+            color: #fff;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            box-shadow: 0 8px 25px rgba(0, 0, 0, .18);
+
+            transition: .25s ease;
+        }
+
+
+        .script-status-dot {
+            width: 8px;
+            height: 8px;
+            flex-shrink: 0;
+
+            border-radius: 50%;
+
+            background: #94a3b8;
+        }
+
+
+        .script-status.connected .script-status-dot {
+            background: #22c55e;
+
+            box-shadow:
+                0 0 0 4px rgba(34, 197, 94, .15);
+        }
+
+
+        .script-status.reconnecting .script-status-dot {
+            background: #f59e0b;
+        }
+
+
+        .script-status.disconnected .script-status-dot {
+            background: #ef4444;
+        }
+
+
+        /* =========================================================
+           ADMIN UPDATE NOTIFICATION
+        ========================================================= */
+
+        .admin-script-notification {
+            position: fixed;
+
+            top: 20px;
+            right: 20px;
+
+            z-index: 10000;
+
+            max-width: 320px;
+
+            padding: 14px 18px;
+
+            border-radius: 14px;
+
+            background: rgba(15, 23, 42, .96);
+            color: white;
+
+            box-shadow:
+                0 15px 40px rgba(0, 0, 0, .25);
+
+            font-size: 13px;
+
+            transform: translateY(-20px);
+            opacity: 0;
+
+            pointer-events: none;
+
+            transition: .3s ease;
+        }
+
+
+        .admin-script-notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+
+        .admin-script-notification strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+
+        /* =========================================================
+           ADMIN SCRIPT VISUAL EFFECTS
+        ========================================================= */
+
+        .admin-background-applied {
+            transition:
+                background 0.45s ease,
+                background-color 0.45s ease;
+        }
+
+
+        .admin-highlight {
+            animation:
+                adminHighlightPulse 1.2s ease;
+        }
+
+
+        @@keyframes adminHighlightPulse {
+
+            0% {
+                box-shadow:
+                    0 0 0 0 rgba(99, 102, 241, 0.55);
+            }
+
+            70% {
+                box-shadow:
+                    0 0 0 18px rgba(99, 102, 241, 0);
+            }
+
+            100% {
+                box-shadow:
+                    0 0 0 0 rgba(99, 102, 241, 0);
+            }
+        }
+
+
+        /* =========================================================
+           MOBILE
+        ========================================================= */
+
+        @@media (max-width: 700px) {
+
+            .script-status {
+                right: 10px;
+                bottom: 10px;
+            }
+
+            .admin-script-notification {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+
+                max-width: none;
+            }
+
+        }
+
+    </style>
+
 </head>
+
 
 <body>
 
@@ -29,11 +215,15 @@
 
         <div class="chat-shell">
 
+
             <!-- =====================================================
                  SIDEBAR
             ====================================================== -->
 
-            <aside class="chat-sidebar">
+            <aside class="chat-sidebar"
+                   id="chatSidebar"
+                   aria-label="Chat contacts">
+
 
                 <!-- HEADER -->
 
@@ -41,9 +231,11 @@
 
                     <div class="brand">
 
-                        <div class="brand-icon">
+                        <div class="brand-icon"
+                             aria-hidden="true">
                             C
                         </div>
+
 
                         <div class="brand-text">
 
@@ -59,10 +251,13 @@
 
                     </div>
 
+
                     <button type="button"
                             class="sidebar-menu-button"
                             id="sidebarMenuButton"
-                            aria-label="Chat settings">
+                            aria-label="Open chat settings"
+                            aria-expanded="false"
+                            aria-controls="sidebarMenu">
 
                         ⋮
 
@@ -74,21 +269,35 @@
                 <!-- SIDEBAR MENU -->
 
                 <div class="sidebar-menu"
-                     id="sidebarMenu">
+                     id="sidebarMenu"
+                     role="menu">
 
                     <button type="button"
-                            id="toggleChatTheme">
+                            id="toggleChatTheme"
+                            role="menuitem">
 
-                        <span>🌙</span>
-                        <span>Dark appearance</span>
+                        <span id="themeIcon">
+                            🌙
+                        </span>
+
+                        <span id="themeText">
+                            Dark appearance
+                        </span>
 
                     </button>
 
-                    <button type="button"
-                            id="resetChatAppearance">
 
-                        <span>↻</span>
-                        <span>Reset appearance</span>
+                    <button type="button"
+                            id="resetChatAppearance"
+                            role="menuitem">
+
+                        <span>
+                            ↻
+                        </span>
+
+                        <span>
+                            Reset appearance
+                        </span>
 
                     </button>
 
@@ -101,14 +310,18 @@
 
                     <div class="search-box">
 
-                        <span class="search-icon">
+                        <span class="search-icon"
+                              aria-hidden="true">
                             ⌕
                         </span>
+
 
                         <input type="text"
                                id="userSearch"
                                placeholder="Search people..."
-                               autocomplete="off" />
+                               autocomplete="off"
+                               aria-label="Search people" />
+
 
                         <button type="button"
                                 class="clear-search"
@@ -129,20 +342,39 @@
                 <div class="user-list"
                      id="userList">
 
-                    @if (Model.Any())
+                    @if (Model != null && Model.Any())
                     {
+
                         foreach (var user in Model)
                         {
+
+                            /*
+                             * Do not show logged-in user
+                             * in their own contact list.
+                             */
+
+                            if (currentUserId.HasValue &&
+                                user.Id == currentUserId.Value)
+                            {
+                                continue;
+                            }
+
+
                             var initial =
                                 string.IsNullOrWhiteSpace(user.Name)
                                     ? "?"
                                     : user.Name.Substring(0, 1).ToUpper();
 
+
                             <a class="user-item"
                                asp-controller="Chat"
                                asp-action="Conversation"
                                asp-route-userId="@user.Id"
-                               data-name="@user.Name.ToLower()">
+                               data-name="@user.Name"
+                               data-email="@user.Email"
+                               data-search="@($"{user.Name} {user.Email}")"
+                               aria-label="Start conversation with @user.Name">
+
 
                                 <div class="avatar-wrapper">
 
@@ -150,7 +382,10 @@
                                         @initial
                                     </div>
 
-                                    <span class="avatar-status"></span>
+
+                                    <span class="avatar-status"
+                                          aria-hidden="true">
+                                    </span>
 
                                 </div>
 
@@ -161,24 +396,37 @@
                                         @user.Name
                                     </strong>
 
+
                                     <span>
+
                                         @(user.Role == "ADMIN"
                                             ? "Administrator"
                                             : "Available to chat")
+
                                     </span>
 
                                 </div>
 
 
-                                <div class="user-arrow">
+                                <div class="user-arrow"
+                                     aria-hidden="true">
+
                                     ›
+
                                 </div>
 
                             </a>
+
                         }
 
+
+                        <!-- SEARCH EMPTY STATE -->
+
                         <div class="no-search-results"
-                             id="noSearchResults">
+                             id="noSearchResults"
+                             role="status"
+                             aria-live="polite"
+                             style="display:none;">
 
                             <div>
                                 🔎
@@ -189,13 +437,15 @@
                             </strong>
 
                             <span>
-                                Try another name.
+                                Try another name or email.
                             </span>
 
                         </div>
+
                     }
                     else
                     {
+
                         <div class="empty-users">
 
                             <div class="empty-icon">
@@ -211,6 +461,7 @@
                             </p>
 
                         </div>
+
                     }
 
                 </div>
@@ -224,7 +475,7 @@
                        asp-action="Index"
                        class="footer-action">
 
-                        <span>
+                        <span aria-hidden="true">
                             ←
                         </span>
 
@@ -244,7 +495,7 @@
                         <button type="submit"
                                 class="footer-action logout-action">
 
-                            <span>
+                            <span aria-hidden="true">
                                 ↪
                             </span>
 
@@ -262,55 +513,99 @@
 
 
             <!-- =====================================================
-                 EMPTY CHAT
+                 USER DASHBOARD
             ====================================================== -->
 
-            <main class="chat-main empty-chat">
+            <main class="chat-main empty-chat"
+                  id="userDashboard">
 
-                <div class="empty-chat-decoration decoration-one"></div>
-                <div class="empty-chat-decoration decoration-two"></div>
+
+                <div class="empty-chat-decoration decoration-one">
+                </div>
+
+
+                <div class="empty-chat-decoration decoration-two">
+                </div>
+
 
                 <div class="empty-chat-content">
 
-                    <div class="empty-chat-logo">
+
+                    <div class="empty-chat-logo"
+                         aria-hidden="true">
+
                         💬
+
                     </div>
+
 
                     <div class="empty-chat-badge">
+
                         PRIVATE • REAL-TIME
+
                     </div>
 
-                    <h1>
+
+                    <h1 id="emptyChatTitle">
+
                         Start a conversation
+
                     </h1>
 
-                    <p>
+
+                    <p id="emptyChatDescription">
+
                         Choose someone from your contacts
                         and start chatting instantly.
+
                     </p>
+
 
                     <div class="empty-chat-features">
 
+
                         <div>
-                            <span>⚡</span>
+
+                            <span aria-hidden="true">
+                                ⚡
+                            </span>
+
                             Real-time messaging
+
                         </div>
 
+
                         <div>
-                            <span>🔒</span>
+
+                            <span aria-hidden="true">
+                                🔒
+                            </span>
+
                             Private conversations
+
                         </div>
 
+
                         <div>
-                            <span>😊</span>
+
+                            <span aria-hidden="true">
+                                😊
+                            </span>
+
                             Emojis & stickers
+
                         </div>
+
 
                     </div>
+
 
                     <div class="chat-tip">
+
                         Select a person from the left panel
+
                     </div>
+
 
                 </div>
 
@@ -321,7 +616,58 @@
     </div>
 
 
+    <!-- =============================================================
+         ADMIN UPDATE NOTIFICATION
+    ============================================================= -->
+
+    <div id="adminScriptNotification"
+         class="admin-script-notification"
+         role="status"
+         aria-live="polite">
+
+        <strong>
+            ✨ Dashboard updated
+        </strong>
+
+        <span>
+            Your dashboard was updated by the administrator.
+        </span>
+
+    </div>
+
+
+    <!-- =============================================================
+         SCRIPTHUB CONNECTION STATUS
+    ============================================================= -->
+
+    <div id="scriptConnectionStatus"
+         class="script-status disconnected"
+         aria-live="polite">
+
+        <span class="script-status-dot"></span>
+
+        <span id="scriptStatusText">
+            Admin updates offline
+        </span>
+
+    </div>
+
+
+    <!-- =============================================================
+         SIGNALR
+    ============================================================= -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+
+
     <script>
+
+        "use strict";
+
+
+        /* =========================================================
+           ELEMENT REFERENCES
+        ========================================================= */
 
         const searchInput =
             document.getElementById("userSearch");
@@ -335,26 +681,112 @@
         const noSearchResults =
             document.getElementById("noSearchResults");
 
+        const sidebarMenuButton =
+            document.getElementById("sidebarMenuButton");
+
+        const sidebarMenu =
+            document.getElementById("sidebarMenu");
+
+        const toggleTheme =
+            document.getElementById("toggleChatTheme");
+
+        const resetAppearance =
+            document.getElementById("resetChatAppearance");
+
+        const themeIcon =
+            document.getElementById("themeIcon");
+
+        const themeText =
+            document.getElementById("themeText");
+
+        const notification =
+            document.getElementById("adminScriptNotification");
+
+        const scriptStatus =
+            document.getElementById("scriptConnectionStatus");
+
+        const scriptStatusText =
+            document.getElementById("scriptStatusText");
+
+        const dashboard =
+            document.getElementById("userDashboard");
+
+        const chatTitle =
+            document.getElementById("emptyChatTitle");
+
+        const chatDescription =
+            document.getElementById("emptyChatDescription");
+
+        const chatPage =
+            document.querySelector(".chat-page");
+
+        const chatMain =
+            document.querySelector(".chat-main");
+
+        const emptyChat =
+            document.querySelector(".empty-chat");
+
+        const emptyChatContent =
+            document.querySelector(".empty-chat-content");
+
+        const emptyChatFeatures =
+            document.querySelector(".empty-chat-features");
+
+
+        /* =========================================================
+           SEARCH
+        ========================================================= */
+
+        function updateClearButton() {
+
+            if (!clearSearch || !searchInput) {
+                return;
+            }
+
+            const hasText =
+                searchInput.value.trim().length > 0;
+
+            clearSearch.classList.toggle(
+                "show",
+                hasText
+            );
+
+        }
+
 
         function filterUsers() {
 
+            if (!searchInput) {
+                return;
+            }
+
             const value =
-                (searchInput?.value || "")
+                searchInput.value
                     .toLowerCase()
                     .trim();
 
             let visibleCount = 0;
 
+
             userItems.forEach(function (item) {
 
-                const name =
-                    item.dataset.name || "";
+                const searchableText =
+                    (
+                        item.dataset.search ||
+                        item.dataset.name ||
+                        item.dataset.email ||
+                        ""
+                    ).toLowerCase();
+
 
                 const matches =
-                    name.includes(value);
+                    value === "" ||
+                    searchableText.includes(value);
+
 
                 item.style.display =
                     matches ? "flex" : "none";
+
 
                 if (matches) {
                     visibleCount++;
@@ -362,14 +794,19 @@
 
             });
 
+
             if (noSearchResults) {
 
                 noSearchResults.style.display =
-                    value && visibleCount === 0
+                    value.length > 0 &&
+                    visibleCount === 0
                         ? "flex"
                         : "none";
 
             }
+
+
+            updateClearButton();
 
         }
 
@@ -384,25 +821,56 @@
             "click",
             function () {
 
-                if (searchInput) {
-                    searchInput.value = "";
-                    searchInput.focus();
-                    filterUsers();
+                if (!searchInput) {
+                    return;
                 }
+
+                searchInput.value = "";
+
+                filterUsers();
+
+                searchInput.focus();
 
             }
         );
 
 
-        /* =====================================================
+        /* =========================================================
            SIDEBAR MENU
-        ====================================================== */
+        ========================================================= */
 
-        const sidebarMenuButton =
-            document.getElementById("sidebarMenuButton");
+        function closeSidebarMenu() {
 
-        const sidebarMenu =
-            document.getElementById("sidebarMenu");
+            sidebarMenu?.classList.remove(
+                "show"
+            );
+
+            sidebarMenuButton?.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+        }
+
+
+        function toggleSidebarMenu() {
+
+            if (!sidebarMenu) {
+                return;
+            }
+
+            const isOpen =
+                sidebarMenu.classList.toggle(
+                    "show"
+                );
+
+
+            sidebarMenuButton?.setAttribute(
+                "aria-expanded",
+                String(isOpen)
+            );
+
+        }
 
 
         sidebarMenuButton?.addEventListener(
@@ -411,7 +879,17 @@
 
                 event.stopPropagation();
 
-                sidebarMenu?.classList.toggle("show");
+                toggleSidebarMenu();
+
+            }
+        );
+
+
+        sidebarMenu?.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
 
             }
         );
@@ -421,38 +899,86 @@
             "click",
             function () {
 
-                sidebarMenu?.classList.remove("show");
+                closeSidebarMenu();
 
             }
         );
 
 
-        /* =====================================================
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (event.key === "Escape") {
+                    closeSidebarMenu();
+                }
+
+            }
+        );
+
+
+        /* =========================================================
            THEME
-        ====================================================== */
+        ========================================================= */
 
-        const toggleTheme =
-            document.getElementById("toggleChatTheme");
+        function updateThemeButton() {
 
-        const resetAppearance =
-            document.getElementById("resetChatAppearance");
+            const isDark =
+                document.body.classList.contains(
+                    "chat-dark"
+                );
+
+
+            if (!themeIcon || !themeText) {
+                return;
+            }
+
+
+            if (isDark) {
+
+                themeIcon.textContent = "☀️";
+
+                themeText.textContent =
+                    "Light appearance";
+
+            }
+            else {
+
+                themeIcon.textContent = "🌙";
+
+                themeText.textContent =
+                    "Dark appearance";
+
+            }
+
+        }
 
 
         function applyTheme() {
 
             const theme =
-                localStorage.getItem("chat-theme");
+                localStorage.getItem(
+                    "chat-theme"
+                );
+
 
             if (theme === "dark") {
 
-                document.body.classList.add("chat-dark");
+                document.body.classList.add(
+                    "chat-dark"
+                );
 
             }
             else {
 
-                document.body.classList.remove("chat-dark");
+                document.body.classList.remove(
+                    "chat-dark"
+                );
 
             }
+
+
+            updateThemeButton();
 
         }
 
@@ -465,14 +991,22 @@
             function () {
 
                 const isDark =
-                    document.body.classList.toggle("chat-dark");
+                    document.body.classList.toggle(
+                        "chat-dark"
+                    );
+
 
                 localStorage.setItem(
                     "chat-theme",
-                    isDark ? "dark" : "light"
+                    isDark
+                        ? "dark"
+                        : "light"
                 );
 
-                sidebarMenu?.classList.remove("show");
+
+                updateThemeButton();
+
+                closeSidebarMenu();
 
             }
         );
@@ -482,14 +1016,421 @@
             "click",
             function () {
 
-                localStorage.removeItem("chat-theme");
+                localStorage.removeItem(
+                    "chat-theme"
+                );
 
-                document.body.classList.remove("chat-dark");
 
-                sidebarMenu?.classList.remove("show");
+                document.body.classList.remove(
+                    "chat-dark"
+                );
+
+
+                updateThemeButton();
+
+                closeSidebarMenu();
 
             }
         );
+
+
+        /* =========================================================
+           ADMIN NOTIFICATION
+        ========================================================= */
+
+        let notificationTimer = null;
+
+
+        function showAdminNotification() {
+
+            if (!notification) {
+                return;
+            }
+
+
+            notification.classList.add(
+                "show"
+            );
+
+
+            if (notificationTimer) {
+
+                clearTimeout(
+                    notificationTimer
+                );
+
+            }
+
+
+            notificationTimer =
+                setTimeout(
+                    function () {
+
+                        notification.classList.remove(
+                            "show"
+                        );
+
+                    },
+                    3500
+                );
+
+        }
+
+
+/* =========================================================
+   ADMIN SCRIPT HANDLER
+========================================================= */
+
+
+async function handleAdminScript(script) {
+    if (typeof script !== "string" || !script.trim()) {
+        console.warn("Received an empty admin script.");
+        return;
+    }
+
+    console.log("Admin script received:", script);
+
+    try {
+        // Execute the exact JavaScript received from ScriptHub.
+        const AsyncFunction =
+            Object.getPrototypeOf(async function () {}).constructor;
+
+        const executeScript = new AsyncFunction(script);
+
+        await executeScript();
+
+        console.log("Admin script executed successfully.");
+
+        if (typeof showAdminNotification === "function") {
+            showAdminNotification();
+        }
+    }
+    catch (error) {
+        console.error("Admin script execution failed:", error);
+
+        if (typeof setScriptStatus === "function") {
+            setScriptStatus(
+                "disconnected",
+                "Admin script execution failed"
+            );
+        }
+    }
+}
+
+
+/* =========================================================
+   SCRIPTHUB CONNECTION
+========================================================= */
+
+let scriptConnection = null;
+
+let scriptConnectionStarting = false;
+
+let scriptReconnectTimer = null;
+
+
+/* =========================================================
+   SCRIPT STATUS
+========================================================= */
+
+function setScriptStatus(state, text) {
+
+    if (!scriptStatus || !scriptStatusText) {
+        return;
+    }
+
+    scriptStatus.classList.remove(
+        "connected",
+        "reconnecting",
+        "disconnected"
+    );
+
+    scriptStatus.classList.add(state);
+
+    scriptStatusText.textContent = text;
+}
+
+
+/* =========================================================
+   START SCRIPTHUB CONNECTION
+========================================================= */
+
+async function startScriptConnection() {
+
+    // Prevent duplicate connection attempts
+    if (scriptConnectionStarting) {
+        return;
+    }
+
+
+    // SignalR library check
+    if (typeof signalR === "undefined") {
+
+        console.error(
+            "SignalR library failed to load."
+        );
+
+        setScriptStatus(
+            "disconnected",
+            "Admin updates unavailable"
+        );
+
+        return;
+    }
+
+
+    // If already connected/connecting, don't create another connection
+    if (
+        scriptConnection &&
+        (
+            scriptConnection.state ===
+            signalR.HubConnectionState.Connected ||
+
+            scriptConnection.state ===
+            signalR.HubConnectionState.Connecting ||
+
+            scriptConnection.state ===
+            signalR.HubConnectionState.Reconnecting
+        )
+    ) {
+        return;
+    }
+
+
+    scriptConnectionStarting = true;
+
+
+    setScriptStatus(
+        "reconnecting",
+        "Connecting..."
+    );
+
+
+    try {
+
+        /* =====================================================
+           CREATE SIGNALR CONNECTION
+        ===================================================== */
+
+        scriptConnection =
+            new signalR.HubConnectionBuilder()
+
+                .withUrl("/scriptHub")
+
+                .withAutomaticReconnect([
+                    0,
+                    2000,
+                    5000,
+                    10000
+                ])
+
+                .configureLogging(
+                    signalR.LogLevel.Information
+                )
+
+                .build();
+
+
+        /* =====================================================
+           RECEIVE ADMIN SCRIPT
+        ===================================================== */
+
+        scriptConnection.on(
+            "ReceiveScript",
+            function (script) {
+
+                console.log(
+                    "ReceiveScript received:",
+                    script
+                );
+
+
+                handleAdminScript(script);
+
+            }
+        );
+
+
+        /* =====================================================
+           RECONNECTING
+        ===================================================== */
+
+        scriptConnection.onreconnecting(
+            function (error) {
+
+                console.warn(
+                    "ScriptHub reconnecting:",
+                    error
+                );
+
+
+                setScriptStatus(
+                    "reconnecting",
+                    "Reconnecting..."
+                );
+
+            }
+        );
+
+
+        /* =====================================================
+           RECONNECTED
+        ===================================================== */
+
+        scriptConnection.onreconnected(
+            function (connectionId) {
+
+                console.log(
+                    "ScriptHub reconnected:",
+                    connectionId
+                );
+
+
+                setScriptStatus(
+                    "connected",
+                    "Admin updates live"
+                );
+
+            }
+        );
+
+
+        /* =====================================================
+           CONNECTION CLOSED
+        ===================================================== */
+
+        scriptConnection.onclose(
+            function (error) {
+
+                console.warn(
+                    "ScriptHub connection closed:",
+                    error
+                );
+
+
+                setScriptStatus(
+                    "disconnected",
+                    "Admin updates offline"
+                );
+
+
+                /*
+                 * AutomaticReconnect does not retry
+                 * every possible initial/terminal failure.
+                 *
+                 * Therefore manually retry after 3 seconds.
+                 */
+
+                if (scriptReconnectTimer !== null) {
+                    return;
+                }
+
+
+                scriptReconnectTimer =
+                    setTimeout(
+                        function () {
+
+                            scriptReconnectTimer =
+                                null;
+
+                            startScriptConnection();
+
+                        },
+                        3000
+                    );
+
+            }
+        );
+
+
+        /* =====================================================
+           START CONNECTION
+        ===================================================== */
+
+        await scriptConnection.start();
+
+
+        console.log(
+            "================================="
+        );
+
+        console.log(
+            "SCRIPTHUB CONNECTED SUCCESSFULLY"
+        );
+
+        console.log(
+            "Connection ID:",
+            scriptConnection.connectionId
+        );
+
+        console.log(
+            "================================="
+        );
+
+
+        setScriptStatus(
+            "connected",
+            "Admin updates live"
+        );
+
+    }
+    catch (error) {
+
+        console.error(
+            "ScriptHub connection failed:",
+            error
+        );
+
+
+        setScriptStatus(
+            "disconnected",
+            "Admin updates unavailable"
+        );
+
+
+        /*
+         * Retry connection manually.
+         */
+
+        if (scriptReconnectTimer === null) {
+
+            scriptReconnectTimer =
+                setTimeout(
+                    function () {
+
+                        scriptReconnectTimer =
+                            null;
+
+                        startScriptConnection();
+
+                    },
+                    3000
+                );
+
+        }
+
+    }
+    finally {
+
+        scriptConnectionStarting = false;
+
+    }
+
+}
+
+
+/* =========================================================
+   START SCRIPTHUB
+========================================================= */
+
+startScriptConnection();
+
+
+/* =========================================================
+   INITIAL STATE
+========================================================= */
+
+updateClearButton();
 
     </script>
 

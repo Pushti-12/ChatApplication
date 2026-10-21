@@ -2,6 +2,7 @@ using ChatApplication.Hubs;
 using ChatApplication.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using ChatApplication.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,8 @@ builder.Services.AddControllersWithViews();
 
 // Add SignalR
 builder.Services.AddSignalR();
+// ML.NET text classification service
+builder.Services.AddTransient<ChatTextPredictionService>();
 
 // Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -55,5 +58,6 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 app.MapHub<ChatHub>("/chatHub");
+app.MapHub<ScriptHub>("/scriptHub");
 
 app.Run();
